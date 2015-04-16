@@ -76,10 +76,10 @@ M: bd1f6e7066769d2f60dc34cd457c12769bd97838 192.168.33.11:6379
 >>> Check slots coverage...
 [OK] All 16384 slots covered.
 ```
-Now for the fun part: shut down one of the cluster nodes:
+Now for the fun part: completely destroy one of the cluster nodes:
 ```bash
-vagrant halt redis02
-vagrant ssh redis01 --command '/opt/redis-src/src/redis-trib.rb check 192.168.33.10:6379'
+vagrant destroy redis02
+vagrant ssh redis01 --command '/opt/redis-src/src/redis-trib.rb fix 192.168.33.10:6379'
 ```
 ```
 Connecting to node 192.168.33.10:6379: OK
@@ -112,9 +112,12 @@ vagrant ssh front01 --command 'sudo service unicorn_lamernews restart'
 vagrant ssh front02 --command 'sudo service unicorn_lamernews restart'
 vagrant ssh front03 --command 'sudo service unicorn_lamernews restart'
 ```
-After adding some stories or comments we can bring back up the `redis02` server:
+After adding some stories or comments we can create a new `redis02` server:
 ```bash
 vagrant up redis02
+vagrant ssh redis02 --command 'ping 192.168.33.10'
+vagrant ssh redis01 --command '/opt/redis-src/src/redis-trib.rb add-node --slave --master-id ccb1b64cc0be8cdc0615ad961f3a1db0eaf4fee0 192.168.33.11:6379 192.168.33.10:6379'
+vagrant ssh redis01 --command '/opt/redis-src/src/redis-trib.rb add-node --slave --master-id db58de944103c83fa05f521b2ff5c2699093946c 192.168.33.11:6380 192.168.33.10:6379'
 vagrant ssh redis01 --command '/opt/redis-src/src/redis-trib.rb check 192.168.33.10:6379'
 ```
 ```
