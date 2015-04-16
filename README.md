@@ -1,11 +1,11 @@
 # Blendle Developer Operations Assignment #
 Entry by Mathijs M&ouml;hlmann.
 
-I've had a lot of fun doing this assignment. I took the opportunity to play around with redis cluster. This is a very new feature of redis (since 3.0) so I would not recommend using this in production yet.
+I've had a lot of fun doing this assignment. I took the opportunity to play around with redis cluster. This is a very new feature of redis (since 3.0) so I would not recommend using this in production yet. It gave me all kinds of trouble, but made it run in the end.
 
 ## The setup ##
 
-I've deployed the lamernews application onto six virtual machines. These are created via `vagrant`. I'm using ubuntu 14.04 with `virtualbox` on my development machine, but since I don't know what you are using I'm directing you to [the vigrant download page](http://www.vagrantup.com/downloads) for installation instruction for your platform. I'm using version 1.7.2.
+I've deployed the lamernews application onto six virtual machines. These are created via `vagrant`. I'm using ubuntu 14.04 with `virtualbox` on my development machine, but since I don't know what you are using I'm directing you to [the vigrant download page](http://www.vagrantup.com/downloads) for installation instruction for your platform. I'm using version 1.7.2. Note that it should also be possible to use `vagrant` with any other virtualization tool, but I haven't tested that for this setup.
 
 ## Using the code ##
 
@@ -14,17 +14,18 @@ First step is to download this archive and fetch all its dependencies. These ins
 ```bash
 mkdir entry_mathijs; cd entry_mathijs
 git clone https://github.com/secmff/my_entry.git
+cd my_entry
 git submodule update --init
 ```
 Now you should be able to install the environment (make sure you have some RAM):
 ```bash
 vagrant up
 ```
-This will provision all the servers. Note that some warnings within modules I'm using still remain, but these are non-fatal. Since all redis servers need to be bootstrapped before we can setup the cluster that set is best done by hand afterwards:
+This will provision all the servers. Note that some warnings within modules I'm using still remain, but these are non-fatal. All redis servers need to be bootstrapped before we can setup the cluster. We will do that by hand afterwards:
 ```bash
 vagrant ssh redis01 --command /vagrant/setup_cluster.sh
 ```
-Note that redis cluster create script doesn't always do the right thing when setting up the cluster. The master and slaves are sometimes on the same host. So `setup_cluster.sh` works around that.
+Note that stock redis cluster create script doesn't always do the right thing when setting up the cluster. The master and slaves are sometimes on the same host. So `setup_cluster.sh` works around that.
 Create the following entry in your `/etc/hosts` or equivalent:
 ```
 192.168.33.200  news.blendle.com
@@ -33,7 +34,7 @@ Create the following entry in your `/etc/hosts` or equivalent:
 ```
 You can choose an other hostname if this one intervenes with your setup. You should now be able to access the application by pointing your browser at: http://news.blendle.com. Normal deployment would use a round-robin DNS entry. Of course you could simply use the IP addresses as well.
 
-Gain access to the machines just created by:
+To gain access to these machines use:
 ```bash
 vagrant ssh redis01
 vagrant ssh front01
@@ -154,7 +155,7 @@ S: bd1f6e7066769d2f60dc34cd457c12769bd97838 192.168.33.11:6379
 And all is well again. Notice that in this example `redis03` is now
 master over two sets of slots. This is bad for performace and I've
 found that stopping `redis03` at this point leads to troubles. So we
-must move on of the master back after a failure like this.
+must move one master back after a failure like this.
 ```bash
 vagrant ssh redis01 --command '/opt/redis/bin/redis-cli -h 192.168.33.11 -p 6379 cluster failover'
 ```
@@ -162,9 +163,9 @@ It would be nice if redis cluster did this rebalancing itself, but for
 now that is not implemented.
 
 ## front-end machines ##
-The front-end machines run `unicorn` and `nginx` to run the `sinatra` application. This setup can also be split. Running the `unicorn` instances in a middleware layer and having separate machine to run the nginx instances which will loadbalance to the `unicorn` instances.
+The front-end machines run `unicorn` and `nginx` to run the `sinatra` application. This setup can also be split. Running the `unicorn` instances in a middleware layer and having separate machines to run the nginx instances which will loadbalance to the `unicorn` instances.
 
-Biggest problem was getting the application to use the redis-cluster. The default provided gem `redis` does not handle clusters (yet). Redis cluster needs a smart client `redis-rb-cluster`. But it is not possible to get that to work safely in combination with pipeline. A redis feature that `lamernews` application uses. I disable all the use of pipeline and connected the application to `redis-rb-cluster`. All the changes I made are documented in:
+Biggest problem was getting the application to use the redis-cluster. The default provided gem `redis` does not handle clusters (yet). Redis cluster needs a smart client `redis-rb-cluster`. But it is not possible to get that to work safely in combination with pipeline. A redis feature that `lamernews` application uses. I disable all uses of pipeline and connected the application to `redis-rb-cluster`. All the changes I made are documented in:
 ```
 https://github.com/secmff/lamernews
 https://github.com/secmff/redis-rb-cluster/
@@ -206,6 +207,12 @@ In the `Vagrantfile` file there are two lines that read:
 ```
 One for the `redis` servers and one for the front-end machine. When you change these to eq. 5 times it is possible to: `vagrant up front04` and `vagrant up front05`. These will then help run the application. In the file: `modules/frontend/manifests/init.pp` the virtual IP addresses are defined. So more can be added there.
 
+## Mail setup ##
+
+The application must be able to send mail. Unfortunately setting this up dependents highly on specific network setup. So I've simply installed a postfix server that uses MX records to deliver the mail. In normal use I would configure the mail to work together with the existing mail infrastructure. (or set one up)
+
+Note that my provider blocks outgoing SMTP traffic (bastards) so this solution doesn't work for me. YMMV.
+
 ## issues I ran into ##
 
 * The application uses `redis` which is not cluster capable. solved
@@ -231,12 +238,14 @@ Since this a showcase I've not implemented everything I would like to have in a 
 * some user management, please
 * secure the redis instances: http://redis.io/topics/security
 
-## Mail setup ##
-
-The application must be able to send mail. Unfortunately setting this up dependents highly on specific network setup. So I've simply installed a postfix server that uses MX records to deliver the mail. In normal use I would configure the mail to work together with the existing mail infrastructure. (or set one up)
-
-Note that my provider blocks outgoing SMTP traffic (bastards) so this solution doesn't work for me. YMMV.
-
 ## Time spend ##
 
 Almost 4 days. It's addictive. I really feel I must stop here, but there is still more I want to implement. 
+
+archives:
+```
+https://github.com/secmff/my_entry
+https://github.com/secmff/lamernews
+https://github.com/secmff/redis-rb-cluster/
+https://github.com/secmff/puppet-redis/
+```
