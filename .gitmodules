@@ -1,0 +1,33 @@
+[submodule "modules/redis"]
+	path = modules/redis
+	url = https://github.com/secmff/puppet-redis.git
+[submodule "modules/nginx"]
+	path = modules/nginx
+	url = https://github.com/jfryman/puppet-nginx.git
+[submodule "modules/wget"]
+	path = modules/wget
+	url = https://github.com/maestrodev/puppet-wget.git
+[submodule "modules/bundler"]
+	path = modules/bundler
+	url = https://github.com/puppetlabs-operations/puppet-bundler.git
+[submodule "modules/rack"]
+	path = modules/rack
+	url = https://github.com/puppetlabs-operations/puppet-rack.git
+[submodule "modules/unicorn"]
+	path = modules/unicorn
+	url = https://github.com/puppetlabs-operations/puppet-unicorn.git
+[submodule "modules/apt"]
+	path = modules/apt
+	url = https://github.com/puppetlabs/puppetlabs-apt.git
+[submodule "modules/concat"]
+	path = modules/concat
+	url = https://github.com/puppetlabs/puppetlabs-concat.git
+[submodule "modules/gcc"]
+	path = modules/gcc
+	url = https://github.com/puppetlabs/puppetlabs-gcc.git
+[submodule "modules/ruby"]
+	path = modules/ruby
+	url = https://github.com/puppetlabs/puppetlabs-ruby.git
+[submodule "modules/stdlib"]
+	path = modules/stdlib
+	url = https://github.com/puppetlabs/puppetlabs-stdlib.git

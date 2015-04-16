@@ -1,0 +1,71 @@
+#!/bin/bash
+# ucarp                  start virtual IP addresses
+# Authors:               Mathijs Möhlmann
+
+### BEGIN INIT INFO
+# Provides:          ucarp
+# Required-Start:    $network $syslog <%= @application %>
+# Required-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: virtual IP addresses for <%= @application %>
+### END INIT INFO
+
+RETVAL=0
+
+. /lib/lsb/init-functions
+
+PIDFILE=/var/run/ucarp-<%= @vip %>.pid
+
+start() {
+    log_daemon_msg "Starting ucarp interface: <%= @vip %> [<%= @vip_ip %>]"
+    start-stop-daemon --start --pidfile ${PIDFILE} \
+	--make-pidfile --background --exec \
+    /usr/sbin/ucarp -- --interface <%= @interface %> \
+        --srcip <%= scope.lookupvar("ipaddress_" + @interface) %> \
+	--addr <%= @vip_ip %> \
+        --vhid <%= @vip %> \
+	--pass <%= @password %> \
+	--advskew=<%= @hostname == @master ? 0 : 100 %> \
+	--advbase=<%= @advbase %> \
+	--upscript=/usr/share/ucarp/uc<%= @vip %>-up \
+	--downscript=/usr/share/ucarp/uc<%= @vip %>-down \
+	--shutdown \
+	<%= @hostname == @master ? "--preempt" : '' %>
+    RETVAL=$?
+    log_end_msg $RETVAL
+}
+
+stop() {
+    log_daemon_msg "Stopping ucarp interface: <%= @vip %> [<%= @vip_ip %>]"
+    start-stop-daemon --stop --pidfile ${PIDFILE}
+    RETVAL=$?
+    rm $PIDFILE
+    log_end_msg $RETVAL
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart)
+        stop
+        start
+        ;;
+    giveup)
+	kill -SIGUSR2 $(cat ${PIDFILE})
+	;;
+    status)
+	status_of_proc -p ${PIDFILE} 'ucarp'
+	RETVAL=$?
+	;;
+    *)
+        echo "Usage: $0 {start|stop|restart|status|giveup}" >&2
+        exit 1
+        ;;
+esac
+
+exit $RETVAL

@@ -7,14 +7,23 @@ Vagrant.configure(2) do |config|
   # https://docs.vagrantup.com.
 
   config.vm.box = "ubuntu/trusty64"
-  config.vm.define 'redis01' do |machine|
-    config.vm.network "private_network", ip: "192.168.33.10"
+
+  # create three machines running the redis cluster
+  3.times do |i|
+    hostname='redis' + (i+1).to_s.rjust(2, "0")
+    config.vm.define hostname do |machine|
+      machine.vm.network "private_network", ip: "192.168.33." + (i+10).to_s
+      machine.vm.hostname = hostname
+    end
   end
-  config.vm.define 'redis02' do |machine|
-    config.vm.network "private_network", ip: "192.168.33.11"
-  end
-  config.vm.define 'redis03' do |machine|
-    config.vm.network "private_network", ip: "192.168.33.12"
+
+  # create three machines running the lamernews server
+  3.times do |i|
+    hostname='front' + (i+1).to_s.rjust(2, "0")
+    config.vm.define hostname do |machine|
+      machine.vm.network "private_network", ip: "192.168.33." + (i+100).to_s
+      machine.vm.hostname = hostname
+    end
   end
 
   # Create a forwarded port mapping which allows access to a specific port
@@ -22,9 +31,15 @@ Vagrant.configure(2) do |config|
   # accessing "localhost:8080" will access port 80 on the guest machine.
   # config.vm.network "forwarded_port", guest: 80, host: 8080
 
-  config.vm.provision "puppet" do |puppet|
+  config.vm.provision :puppet do |puppet|
     puppet.module_path       = "modules"
     puppet.hiera_config_path = "hiera.yaml"
     puppet.working_directory = "/tmp/vagrant-puppet"
+  end
+
+  config.vm.provider :virtualbox do |v|
+    v.customize ["modifyvm", :id,
+                 "--nicpromisc2", "allow-all",
+                 "--groups", "/Mathijs"]
   end
 end
