@@ -36,7 +36,7 @@ class frontend {
     require => [User['sinatra'],Package['git']],
   }
 
-  file { ['/home/sinatra/lamernews/config','/home/sinatra/lamernews/log']:
+  file { '/home/sinatra/lamernews/config':
     ensure  => directory,
     owner   => 'sinatra',
     group   => 'sinatra',
