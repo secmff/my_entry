@@ -50,6 +50,33 @@ class frontend {
     require => Exec['get lamernews'],
     notify  => Unicorn::App['lamernews'],
   }
+  file { '/var/log/lamernews':
+    ensure      => directory,
+    owner       => 'sinatra',
+    group       => 'sinatra',
+  }
+  unicorn::app { 'lamernews':
+    approot     => '/home/sinatra/lamernews',
+    pidfile     => '/home/sinatra/unicorn.pid',
+    socket      => '/home/sinatra/unicorn.sock',
+    logdir      => '/var/log/lamernews',
+    user        => 'sinatra',
+    group       => 'sinatra',
+    preload_app => true,
+    workers     => 8,
+    rack_env    => 'production',
+    source      => 'system',
+    require     => [Exec['get lamernews'],Exec['get redis-rb-cluster'],
+                    File['/var/log/lamernews']],
+  }
+
+  class { 'nginx': }
+  nginx::resource::upstream { 'sinatra_app':
+    members => [ "unix:/home/sinatra/unicorn.sock" ],
+  }
+  nginx::resource::vhost { 'news.blendle.com':
+    proxy => 'http://sinatra_app',
+  }
 
   include ucarp
   ucarp::instance { 'ucarp200':
@@ -75,26 +102,5 @@ class frontend {
     master      => "front03",
     password    => "kafAbVon4",
     application => "unicorn_lamernews",
-  }
-
-  unicorn::app { 'lamernews':
-    approot     => '/home/sinatra/lamernews',
-    pidfile     => '/home/sinatra/unicorn.pid',
-    socket      => '/home/sinatra/unicorn.sock',
-    user        => 'sinatra',
-    group       => 'sinatra',
-    preload_app => true,
-    workers     => 8,
-    rack_env    => 'production',
-    source      => 'system',
-    require     => [Exec['get lamernews'],Exec['get redis-rb-cluster']],
-  }
-
-  class { 'nginx': }
-  nginx::resource::upstream { 'sinatra_app':
-    members => [ "unix:/home/sinatra/unicorn.sock" ],
-  }
-  nginx::resource::vhost { 'news.blendle.com':
-    proxy => 'http://sinatra_app',
   }
 }
