@@ -239,6 +239,7 @@ Since this a showcase I've not implemented everything I would like to have in a 
 * central puppet master instead of deployment via vagrant share and variable storage
 * some user management, please
 * secure the redis instances: http://redis.io/topics/security
+* separate OS and application data disks for the back-end
 
 ## Time spend ##
 
