@@ -7,6 +7,8 @@ I've had a lot of fun doing this assignment. I took the opportunity to play arou
 
 I've deployed the lamernews application onto six virtual machines. These are created via `vagrant`. I'm using ubuntu 14.04 with `virtualbox` on my development machine, but since I don't know what you are using I'm directing you to [the vigrant download page](http://www.vagrantup.com/downloads) for installation instruction for your platform. I'm using version 1.7.2. Note that it should also be possible to use `vagrant` with any other virtualization tool, but I haven't tested that for this setup.
 
+![Network layout](doc/network.png)
+
 ## Using the code ##
 
 First step is to download this archive and fetch all its dependencies. These instructions assume you use some kind of UNIX shell, but can be easily translated to other platforms.
